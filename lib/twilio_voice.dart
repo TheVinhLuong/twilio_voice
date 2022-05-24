@@ -183,6 +183,9 @@ class TwilioVoice {
           'Returning Call - From: ${call._activeCall!.from}, To: ${call._activeCall!.to}, Direction: ${call._activeCall!.callDirection}');
 
       return CallEvent.returningCall;
+    } else if (state.startsWith("Failure")) {
+      print(state);
+      return CallEvent.failure;
     }
     switch (state) {
       case 'Ringing':

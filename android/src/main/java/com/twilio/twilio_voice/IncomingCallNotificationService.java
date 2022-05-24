@@ -16,14 +16,14 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.twilio.voice.CallInvite;
+import com.twilio.voice.CancelledCallInvite;
+
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
-import com.twilio.voice.CallInvite;
-import com.twilio.voice.CancelledCallInvite;
 
 public class IncomingCallNotificationService extends Service {
 
@@ -240,7 +240,7 @@ public class IncomingCallNotificationService extends Service {
         SharedPreferences preferences = getApplicationContext().getSharedPreferences(TwilioPreferences, Context.MODE_PRIVATE);
         boolean prefsShow = preferences.getBoolean("show-notifications", true);
         boolean allowReturnCalls = preferences.getBoolean("show-return-call-option", true);
-        if (prefsShow && allowReturnCalls) {
+        if (prefsShow) {
             buildMissedCallNotification(cancelledCallInvite.getFrom(), cancelledCallInvite.getTo(), allowReturnCalls);
         }
         endForeground();
@@ -283,15 +283,19 @@ public class IncomingCallNotificationService extends Service {
                             .setContentTitle(title)
                             .setCategory(Notification.CATEGORY_CALL)
                             .setAutoCancel(true)
-                            .addAction(android.R.drawable.ic_menu_call, getString(R.string.twilio_call_back), piReturnCallIntent)
                             .setPriority(NotificationCompat.PRIORITY_HIGH)
                             .setContentTitle(getApplicationName(context))
                             .setContentText(title)
                             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+            
+            if(showReturnCallOption) {
+                builder.addAction(android.R.drawable.ic_menu_call, getString(R.string.twilio_call_back),
+                        piReturnCallIntent);
+            }
 
             notification = builder.build();
         } else {
-            notification = new NotificationCompat.Builder(this)
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
                     .setSmallIcon(R.drawable.ic_call_end_white_24dp)
                     .setContentTitle(getApplicationName(context))
                     .setContentText(title)
@@ -299,8 +303,13 @@ public class IncomingCallNotificationService extends Service {
                     .setOngoing(true)
                     .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                     .setPriority(NotificationCompat.PRIORITY_MAX)
-                    .addAction(android.R.drawable.ic_menu_call, getString(R.string.decline), piReturnCallIntent)
-                    .setColor(Color.rgb(20, 10, 200)).build();
+                    .setColor(Color.rgb(20, 10, 200));
+            
+            if(showReturnCallOption) {
+                builder.addAction(android.R.drawable.ic_menu_call, getString(R.string.twilio_call_back),
+                        piReturnCallIntent);
+            }
+            notification = builder.build();
         }
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
         notificationManager.notify(100, notification);
