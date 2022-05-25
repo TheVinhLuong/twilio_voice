@@ -479,6 +479,11 @@ public class SwiftTwilioVoicePlugin: NSObject, FlutterPlugin,  FlutterStreamHand
     
     // MARK: TVONotificaitonDelegate
     public func callInviteReceived(callInvite: CallInvite) {
+        if self.call != nil {
+            NSLog("REJECTTEDDDD")
+            callInvite.reject()
+            return
+        }
         self.sendPhoneCallEvents(description: "LOG|callInviteReceived:", isError: false)
         
         /**
@@ -567,7 +572,6 @@ public class SwiftTwilioVoicePlugin: NSObject, FlutterPlugin,  FlutterStreamHand
     
     // MARK: TVOCallDelegate
     public func callDidStartRinging(call: Call) {
-        NSLog("RINGGGGGGGGGGG")
         let direction = (self.callOutgoing ? "Outgoing" : "Incoming")
         let from = (call.from ?? self.identity)
         let to = (call.to ?? self.callTo)
