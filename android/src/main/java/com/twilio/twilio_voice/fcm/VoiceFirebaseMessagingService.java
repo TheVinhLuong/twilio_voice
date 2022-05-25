@@ -1,49 +1,33 @@
 package com.twilio.twilio_voice.fcm;
 
-import android.app.ActivityManager;
-import android.app.KeyguardManager;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Handler;
-import android.os.Process;
+import android.os.Looper;
 import android.util.Log;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
-import io.flutter.plugin.common.MethodChannel;
-import io.flutter.plugin.common.PluginRegistry;
-import io.flutter.view.FlutterCallbackInformation;
-import io.flutter.view.FlutterMain;
-import io.flutter.view.FlutterNativeView;
-import io.flutter.view.FlutterRunArguments;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
+import com.twilio.twilio_voice.AnswerJavaActivity;
+import com.twilio.twilio_voice.Constants;
+import com.twilio.twilio_voice.IncomingCallNotificationService;
+import com.twilio.twilio_voice.TwilioVoicePlugin;
 import com.twilio.voice.CallException;
 import com.twilio.voice.CallInvite;
 import com.twilio.voice.CancelledCallInvite;
 import com.twilio.voice.MessageListener;
 import com.twilio.voice.Voice;
 
-import com.twilio.twilio_voice.Constants;
-import com.twilio.twilio_voice.IncomingCallNotificationService;
+import java.util.ArrayList;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
     
     public static final String ACTION_TOKEN = "io.flutter.plugins.firebase.messaging.TOKEN";
     public static final String EXTRA_TOKEN = "token";
+    private ArrayList<String> canceledCallSID = new ArrayList<String>();
 
     private static final String TAG = "FlutterFcmService";
     @Override
@@ -70,12 +54,31 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
             boolean valid = Voice.handleMessage(this, remoteMessage.getData(), new MessageListener() {
                 @Override
                 public void onCallInvite(@NonNull CallInvite callInvite) {
-                    final int notificationId = (int) System.currentTimeMillis();
-                    handleInvite(callInvite, notificationId);
+                    Log.d(TAG, "onCallInvite " + System.currentTimeMillis());
+                    // Cancel the incoming call if there is a call ongoing
+                    if(TwilioVoicePlugin.activeCall != null || AnswerJavaActivity.activeCall != null) {
+                        callInvite.reject(getApplicationContext());
+                        return;
+                    }
+                    final Handler handler = new Handler(Looper.getMainLooper());
+                    handler.postDelayed(() -> {
+                        if(canceledCallSID.contains(callInvite.getCallSid())) {
+                            Log.d(TAG, "Cancel late incoming call");
+                            canceledCallSID.remove(callInvite.getCallSid());
+                            return;
+                        }
+                        final int notificationId = (int) System.currentTimeMillis();
+                        handleInvite(callInvite, notificationId);
+                    }, 1000);
                 }
 
                 @Override
                 public void onCancelledCallInvite(@NonNull CancelledCallInvite cancelledCallInvite, @Nullable CallException callException) {
+                    Log.d(TAG, "onCancelledCallInvite " + System.currentTimeMillis());
+                    if(canceledCallSID.size() > 15) {
+                        canceledCallSID.clear();    
+                    }
+                    canceledCallSID.add(cancelledCallInvite.getCallSid());
                     handleCanceledCallInvite(cancelledCallInvite);
                 }
             });
@@ -104,7 +107,6 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
         Intent intent = new Intent(this, IncomingCallNotificationService.class);
         intent.setAction(Constants.ACTION_CANCEL_CALL);
         intent.putExtra(Constants.CANCELLED_CALL_INVITE, cancelledCallInvite);
-
         startService(intent);
     }
 }

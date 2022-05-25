@@ -8,27 +8,25 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.content.SharedPreferences;
-import android.nfc.Tag;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.TextView;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import com.twilio.voice.Call;
+import com.twilio.voice.CallException;
+import com.twilio.voice.CallInvite;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
-import com.twilio.voice.Call;
-import com.twilio.voice.CallException;
-import com.twilio.voice.CallInvite;
 
 
 public class AnswerJavaActivity extends AppCompatActivity {
@@ -149,9 +147,10 @@ public class AnswerJavaActivity extends AppCompatActivity {
     private void configCallUI() {
         Log.d(TAG, "configCallUI");
         if (activeCallInvite != null) {
-            String fromName = activeCallInvite.getCustomParameters().get("caller_name");
+            String fromName = activeCallInvite.getCustomParameters().get("from_formatted");
             if(fromName == null) {
-                fromName = getString(R.string.unknown_caller);
+                fromName = activeCallInvite.getFrom() != null ? activeCallInvite.getFrom().replace("client:", "") :
+                        getString(R.string.unknown_caller);
             }
             tvUserName.setText(fromName);
 
@@ -226,7 +225,7 @@ public class AnswerJavaActivity extends AppCompatActivity {
 
     }
 
-    Call activeCall;
+    public static Call activeCall;
 
     private Call.Listener callListener() {
         return new Call.Listener() {

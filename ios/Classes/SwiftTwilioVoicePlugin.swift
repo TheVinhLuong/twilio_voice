@@ -44,7 +44,7 @@ public class SwiftTwilioVoicePlugin: NSObject, FlutterPlugin,  FlutterStreamHand
     
     static var appName: String {
         get {
-            return (Bundle.main.infoDictionary!["CFBundleName"] as? String) ?? "Define CFBundleName"
+            return Bundle.main.displayName
         }
     }
     
@@ -52,7 +52,7 @@ public class SwiftTwilioVoicePlugin: NSObject, FlutterPlugin,  FlutterStreamHand
         
         //isSpinning = false
         voipRegistry = PKPushRegistry.init(queue: DispatchQueue.main)
-        let configuration = CXProviderConfiguration(localizedName: "CozyUp")
+        let configuration = CXProviderConfiguration(localizedName: SwiftTwilioVoicePlugin.appName)
         configuration.maximumCallGroups = 1
         configuration.maximumCallsPerCallGroup = 1
         if let callKitIcon = UIImage(named: "AppIcon-Transparent") {
@@ -567,6 +567,7 @@ public class SwiftTwilioVoicePlugin: NSObject, FlutterPlugin,  FlutterStreamHand
     
     // MARK: TVOCallDelegate
     public func callDidStartRinging(call: Call) {
+        NSLog("RINGGGGGGGGGGG")
         let direction = (self.callOutgoing ? "Outgoing" : "Incoming")
         let from = (call.from ?? self.identity)
         let to = (call.to ?? self.callTo)
@@ -967,5 +968,13 @@ extension UserDefaults {
             return value as? Bool
         }
         return nil
+    }
+}
+
+extension Bundle {
+    // Name of the app - title under the icon.
+    var displayName: String {
+            return object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ??
+                object(forInfoDictionaryKey: "CFBundleName") as? String ?? ""
     }
 }
