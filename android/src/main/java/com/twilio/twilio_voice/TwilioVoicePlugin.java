@@ -223,7 +223,7 @@ public class TwilioVoicePlugin implements FlutterPlugin, MethodChannel.MethodCal
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         activity.startActivity(intent);
-
+        
     }
 
     private void registerReceiver() {

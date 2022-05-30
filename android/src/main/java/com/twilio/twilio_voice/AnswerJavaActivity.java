@@ -114,6 +114,7 @@ public class AnswerJavaActivity extends AppCompatActivity {
                 case Constants.ACTION_END_CALL:
                     Log.d(TAG, "ending call" + activeCall != null ? "TRue" : "False");
                     activeCall.disconnect();
+                    activeCall = null;
                     initiatedDisconnect = true;
                     finish();
                     break;
@@ -381,6 +382,7 @@ public class AnswerJavaActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         Log.d(TAG, "AnserJAvaActivity ondestroy");
+        activeCall = null;
 //        unregisterReceiver();
         super.onDestroy();
         if (wakeLock != null) {
