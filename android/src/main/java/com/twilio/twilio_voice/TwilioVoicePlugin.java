@@ -620,7 +620,7 @@ public class TwilioVoicePlugin implements FlutterPlugin, MethodChannel.MethodCal
                 String message = String.format("Call Error: %d, %s", error.getErrorCode(), error.getMessage());
                 Log.e(TAG, message);
                 sendPhoneCallEvents("Failure|" + message);
-
+                disconnected();
             }
 
             @Override
